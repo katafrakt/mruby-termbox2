@@ -1,4 +1,50 @@
 module Termbox2
+  extend self
+
+  def init
+    C.init
+  end
+
+  def shutdown
+    C.shutdown
+  end
+
+  def present
+    C.present
+  end
+
+  def clear
+    C.clear
+  end
+
+  def print(x, y, ch)
+    C.print(x, y, ch)
+  end
+
+  def poll_event
+    C.poll_event
+  end
+
+  def width
+    C.width
+  end
+
+  def height
+    C.height
+  end
+
+  def set_cell(x, y, ch, fg, bg)
+    C.set_cell(x, y, ch, fg, bg)
+  end
+
+  def set_cursor(x, y)
+    C.set_cursor(x, y)
+  end
+
+  def hide_cursor
+    C.hide_cursor
+  end
+
   module Keys
     CTRL_TILDE       = 0x00
     CTRL_2           = 0x00

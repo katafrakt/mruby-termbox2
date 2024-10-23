@@ -152,6 +152,7 @@ static mrb_value mrb_tb2_hide_cursor(mrb_state* mrb, mrb_value self) {
 
 void mrb_mruby_termbox2_gem_init(mrb_state* mrb) {
   struct RClass *termbox_mod = mrb_define_module(mrb, "Termbox2");
+  struct RClass *c_mod = mrb_define_module_under(mrb, termbox_mod, "C");
   
   mrb_value fields[8];
   DEFINE_EVENT_FIELD(0, type);
@@ -166,17 +167,17 @@ void mrb_mruby_termbox2_gem_init(mrb_state* mrb) {
   mrb_value data = mrb_funcall_argv(mrb, mrb_obj_value(mrb_class_get(mrb, "Data")), mrb_intern_lit(mrb, "define"), 8, fields);
   mrb_define_const(mrb, termbox_mod, "Event", data);
 
-  mrb_define_class_method(mrb, termbox_mod, "init", mrb_tb2_init, MRB_ARGS_NONE());
-  mrb_define_class_method(mrb, termbox_mod, "shutdown", mrb_tb2_shutdown, MRB_ARGS_NONE());
-  mrb_define_class_method(mrb, termbox_mod, "present", mrb_tb2_present, MRB_ARGS_NONE());
-  mrb_define_class_method(mrb, termbox_mod, "clear", mrb_tb2_clear, MRB_ARGS_NONE());
-  mrb_define_class_method(mrb, termbox_mod, "print", mrb_tb2_print, MRB_ARGS_REQ(3));
-  mrb_define_class_method(mrb, termbox_mod, "poll_event", mrb_tb2_poll_event, MRB_ARGS_NONE());
-  mrb_define_class_method(mrb, termbox_mod, "width", mrb_tb2_width, MRB_ARGS_NONE());
-  mrb_define_class_method(mrb, termbox_mod, "height", mrb_tb2_height, MRB_ARGS_NONE());
-  mrb_define_class_method(mrb, termbox_mod, "set_cell", mrb_tb2_set_cell, MRB_ARGS_REQ(5));
-  mrb_define_class_method(mrb, termbox_mod, "set_cursor", mrb_tb2_set_cursor, MRB_ARGS_REQ(2));
-  mrb_define_class_method(mrb, termbox_mod, "hide_cursor", mrb_tb2_hide_cursor, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, c_mod, "init", mrb_tb2_init, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, c_mod, "shutdown", mrb_tb2_shutdown, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, c_mod, "present", mrb_tb2_present, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, c_mod, "clear", mrb_tb2_clear, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, c_mod, "print", mrb_tb2_print, MRB_ARGS_REQ(3));
+  mrb_define_class_method(mrb, c_mod, "poll_event", mrb_tb2_poll_event, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, c_mod, "width", mrb_tb2_width, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, c_mod, "height", mrb_tb2_height, MRB_ARGS_NONE());
+  mrb_define_class_method(mrb, c_mod, "set_cell", mrb_tb2_set_cell, MRB_ARGS_REQ(5));
+  mrb_define_class_method(mrb, c_mod, "set_cursor", mrb_tb2_set_cursor, MRB_ARGS_REQ(2));
+  mrb_define_class_method(mrb, c_mod, "hide_cursor", mrb_tb2_hide_cursor, MRB_ARGS_NONE());
 
   // This cannot be desined in Ruby code, because integer values are assigned at compile time.
   struct RClass *format_mod = mrb_define_module_under(mrb, termbox_mod, "Format");
