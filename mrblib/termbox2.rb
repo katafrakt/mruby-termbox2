@@ -1,49 +1,70 @@
 module Termbox2
   extend self
 
+  # Initializes Termbox. This is equivalent to calling termbox_init() in C.
+  #
+  # It comes in two flavours. You can call it with a block, in which case it will take care of cleaning up
+  # when the block is exited. Or you can call it without a block, in which case you will have to call
+  # Termbox.shutdown yourself.
+  #
+  # @example
+  #   Termbox2.init do |tb|
+  #     tb.print(x: 0, y: 0, character: '@')
+  #   end
+  #
+  # @example
+  #   Termbox2.init
+  #   Termbox2.print(x: 0, y: 0, character: '@')
+  #   Termbox2.shutdown
   def init
-    C.init
+    if block_given?
+      C.init
+      yield(Termbox2)
+      C.shutdown
+    else
+      C.init
+    end
   end
 
-  def shutdown
-    C.shutdown
-  end
+  def shutdown = C.shutdown
 
-  def present
-    C.present
-  end
+  def present = C.present
 
-  def clear
-    C.clear
-  end
+  def clear = C.clear
 
-  def print(x, y, ch)
-    C.print(x, y, ch)
-  end
+  # Print a single character at a given position. You need to provide all three arguments.
+  #
+  # @param x [Integer] The x position of the character.
+  # @param y [Integer] The y position of the character.
+  # @param character [String] The character to print.
+  #
+  # @example
+  #   Termbox2.init
+  #   Termbox2.print(x: 0, y: 0, character: '@')
+  def print(x:, y:, character:) = C.print(x, y, character)
 
-  def poll_event
-    C.poll_event
-  end
+    # Blocks untit an event is received.
+  #
+  # @example
+  #   Termbox2.init
+  #   loop do
+  #     case Termbox2.poll_event
+  #     when Termbox2::Keys::ESC
+  #       break
+  #     end
+  #   end
+  #   Termbox2.shutdown
+  def poll_event = C.poll_event
 
-  def width
-    C.width
-  end
+  def width = C.width
 
-  def height
-    C.height
-  end
+  def height = C.height
 
-  def set_cell(x, y, ch, fg, bg)
-    C.set_cell(x, y, ch, fg, bg)
-  end
+  def set_cell(x, y, ch, fg, bg) = C.set_cell(x, y, ch, fg, bg)
 
-  def set_cursor(x, y)
-    C.set_cursor(x, y)
-  end
+  def set_cursor(x, y) = C.set_cursor(x, y)
 
-  def hide_cursor
-    C.hide_cursor
-  end
+  def hide_cursor = C.hide_cursor
 
   module Keys
     CTRL_TILDE       = 0x00
