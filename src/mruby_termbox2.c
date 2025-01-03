@@ -5,6 +5,7 @@
 #include <mruby/string.h>
 #define TB_IMPL
 #include "termbox2.h"
+#include "test_helpers.h"
 
 static mrb_value mrb_tb2_init(mrb_state* mrb, mrb_value self) {
   tb_init();
@@ -210,6 +211,8 @@ void mrb_mruby_termbox2_gem_init(mrb_state* mrb) {
   #ifdef TB_INVISIBLE
   DEFINE_FORMAT_CONST(INVISIBLE);
   #endif
+
+  mrb_init_termbox2_test_helpers(mrb);
 }
 
 void mrb_mruby_termbox2_gem_final(mrb_state* mrb) {}
