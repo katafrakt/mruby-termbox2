@@ -22,6 +22,7 @@ static mrb_value mrb_tb2_test_init_pty(mrb_state *mrb, mrb_value self) {
         tb_shutdown();
         close(test_pty.master_fd);
         close(test_pty.slave_fd);
+        test_pty.initialized = false;
     }
 
     mrb_int width, height;
@@ -36,10 +37,8 @@ static mrb_value mrb_tb2_test_init_pty(mrb_state *mrb, mrb_value self) {
     
     int pty_result = openpty(&test_pty.master_fd, &test_pty.slave_fd, NULL, NULL, &ws);
     if (pty_result == -1) {
-        printf("openpty failed: %s\n", strerror(errno));
         mrb_raise(mrb, E_RUNTIME_ERROR, "Failed to open pseudoterminal");
     }
-    printf("PTY opened: master_fd=%d, slave_fd=%d\n", test_pty.master_fd, test_pty.slave_fd);
     
     // Set non-blocking mode on master
     int flags = fcntl(test_pty.master_fd, F_GETFL, 0);
@@ -48,38 +47,38 @@ static mrb_value mrb_tb2_test_init_pty(mrb_state *mrb, mrb_value self) {
     // Initialize termbox with our slave PTY
     int tb_result = tb_init_fd(test_pty.slave_fd);
     if (tb_result != 0) {
-        fprintf(stderr, "tb_init_fd failed with code: %d\n", tb_result);
         close(test_pty.master_fd);
         close(test_pty.slave_fd);
         mrb_raise(mrb, E_RUNTIME_ERROR, "Failed to initialize Termbox with PTY");
     }
-    printf("Termbox initialized with slave PTY\n");
 
     test_pty.initialized = true;
-    
     return mrb_nil_value();
 }
 
 static mrb_value mrb_tb2_test_read_output(mrb_state *mrb, mrb_value self) {
     if (!test_pty.initialized) {
-        fprintf(stderr, "PTY not initialized in read_output\n");
-        return mrb_nil_value();
+        mrb_raise(mrb, E_RUNTIME_ERROR, "PTY not initialized");
     }
     
-    // Sleep a tiny bit to allow the output to be written
-    usleep(50000);  // Increased to 50ms
+    // Small delay to allow output to be written
+    usleep(10000);  // 10ms delay
     
     char buf[1024];
-    ssize_t n = read(test_pty.master_fd, buf, sizeof(buf) - 1);
+    ssize_t total_read = 0;
+    ssize_t n;
     
-    if (n > 0) {
-        buf[n] = '\0';
-        printf("Read %zd bytes from PTY: '%.*s'\n", n, (int)n, buf);
+    // Try to read multiple times to get all available data
+    do {
+        n = read(test_pty.master_fd, buf + total_read, sizeof(buf) - 1 - total_read);
+        if (n > 0) {
+            total_read += n;
+        }
+    } while (n > 0 && total_read < sizeof(buf) - 1);
+    
+    if (total_read > 0) {
+        buf[total_read] = '\0';
         return mrb_str_new_cstr(mrb, buf);
-    } else if (n == 0) {
-        printf("EOF on PTY\n");
-    } else {
-        printf("read failed: %s\n", strerror(errno));
     }
     
     return mrb_str_new_cstr(mrb, "");
@@ -87,7 +86,6 @@ static mrb_value mrb_tb2_test_read_output(mrb_state *mrb, mrb_value self) {
 
 static mrb_value mrb_tb2_test_cleanup(mrb_state *mrb, mrb_value self) {
     if (test_pty.initialized) {
-        fprintf(stderr, "Cleaning up PTY\n");
         tb_shutdown();
         close(test_pty.master_fd);
         close(test_pty.slave_fd);
