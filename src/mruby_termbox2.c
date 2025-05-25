@@ -127,10 +127,15 @@ static mrb_value mrb_tb2_set_cell(mrb_state *mrb, mrb_value self) {
     ch_str = RSTRING_PTR(ch_obj);
     mrb_int ch_len = RSTRING_LEN(ch_obj);
     if (ch_len > 0) {
-      ch = (uint32_t)(unsigned char)ch_str[0];
+      if (tb_utf8_char_length(ch_str[0]) > ch_len) {
+        mrb_raise(mrb, E_ARGUMENT_ERROR, "Invalid UTF-8 sequence");
+      }
+      if (tb_utf8_char_to_unicode(&ch, ch_str) <= 0) {
+        mrb_raise(mrb, E_ARGUMENT_ERROR, "Invalid UTF-8 sequence");
+      }
     }
   } else {
-    mrb_raise(mrb, E_TYPE_ERROR, "String or Integer expected");
+    mrb_raise(mrb, E_TYPE_ERROR, "String expected");
   }
 
   tb_set_cell((int)x, (int)y, ch, (uint32_t)fg, (uint32_t)bg);
