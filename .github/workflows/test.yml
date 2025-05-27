@@ -1,0 +1,73 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        mruby-version:
+          - "3.3.0"
+          - "3.4.0"
+          - "head"
+    steps:
+      - name: Checkout mrbgem repository
+        uses: actions/checkout@v4
+        with:
+          path: mrbgem
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            bison \
+            rake
+
+      - name: Clone mruby
+        run: |
+          if [ "${{ matrix.mruby-version }}" = "head" ]; then
+            git clone https://github.com/mruby/mruby.git
+          else
+            git clone --branch ${{ matrix.mruby-version }} --depth 1 https://github.com/mruby/mruby.git
+          fi
+
+      - name: Create build config
+        run: |
+          cat > build_config.rb << 'EOF'
+          MRuby::Build.new do |conf|
+            toolchain :gcc
+            conf.cc.flags << '-Wall' << '-Werror'
+            
+            conf.enable_debug
+            conf.enable_test
+            
+            conf.gem File.expand_path('mrbgem', __dir__)
+          end
+          EOF
+
+      - name: Build mruby with mrbgem
+        run: |
+          cd mruby
+          make clean
+          MRUBY_CONFIG=../build_config.rb ruby ./minirake
+
+      - name: Install dependencies
+        run: sudo apt-get install -y screen
+
+      - name: Run mruby tests
+        run: |
+          cd mruby
+          screen -D -m bash -c "MRUBY_CONFIG=../build_config.rb ruby ./minirake test"
